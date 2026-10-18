@@ -1,0 +1,110 @@
+name: Build APK + IPA
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  # ─────────────────────────── ANDROID · APK ───────────────────────────
+  apk:
+    name: Android APK
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - uses: android-actions/setup-android@v3
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Compilar web
+        run: npm run build
+
+      - name: Sincronizar Capacitor (Android)
+        run: npx cap sync android
+
+      - name: Compilar APK (debug)
+        working-directory: android
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon
+
+      - name: Renombrar APK
+        run: |
+          mkdir -p salida
+          find android/app/build/outputs/apk -name '*.apk' -exec cp {} salida/GestorArchivos.apk \;
+          ls -la salida/
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: GestorArchivos-APK
+          path: salida/GestorArchivos.apk
+          if-no-files-found: error
+
+  # ──────────────────────────── iOS · IPA ──────────────────────────────
+  ipa:
+    name: iOS IPA (sin firmar)
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Compilar web
+        run: npm run build
+
+      - name: Sincronizar Capacitor (iOS)
+        run: npx cap sync ios
+
+      - name: CocoaPods
+        working-directory: ios/App
+        run: pod install --repo-update
+
+      - name: Compilar .app sin firma
+        working-directory: ios/App
+        run: |
+          xcodebuild -workspace App.xcworkspace \
+            -scheme App \
+            -configuration Release \
+            -sdk iphoneos \
+            -derivedDataPath build \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGN_ENTITLEMENTS="" \
+            build
+
+      - name: Empaquetar .ipa
+        run: |
+          APP="ios/App/build/Build/Products/Release-iphoneos/App.app"
+          test -d "$APP" || { echo "No se generó App.app"; exit 1; }
+          mkdir -p Payload
+          cp -R "$APP" Payload/
+          zip -qry GestorArchivos.ipa Payload
+          ls -la GestorArchivos.ipa
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: GestorArchivos-IPA-sin-firmar
+          path: GestorArchivos.ipa
+          if-no-files-found: error

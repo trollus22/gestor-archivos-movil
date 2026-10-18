@@ -1,0 +1,42 @@
+# Dependencias
+node_modules/
+.pnp/
+.pnp.js
+
+# Secretos — NUNCA al repositorio
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+
+# Compilados
+dist/
+build/
+*.log
+
+# Android
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+android/.idea/
+*.apk
+*.aab
+*.keystore
+*.jks
+
+# iOS
+ios/App/Pods/
+ios/App/build/
+ios/App/App/public/
+ios/App/App/capacitor.config.json
+ios/DerivedData/
+*.ipa
+*.mobileprovision
+
+# Verificación y basura
+verification-screenshots/
+verification-results.json
+.DS_Store
+Thumbs.db

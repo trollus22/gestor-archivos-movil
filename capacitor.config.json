@@ -1,0 +1,16 @@
+{
+  "appId": "ch.mariomartin.gestorarchivos",
+  "appName": "Gestor de Archivos",
+  "webDir": "dist",
+  "backgroundColor": "#111318",
+  "server": {
+    "url": "https://movilgestion.141.253.193.245.nip.io",
+    "cleartext": true,
+    "allowNavigation": [
+      "*"
+    ]
+  },
+  "android": {
+    "allowMixedContent": false
+  }
+}
